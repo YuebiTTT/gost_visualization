@@ -89,7 +89,7 @@ function renderTaskList(tasks) {
   
   tasks.forEach(task => {
     const taskItem = document.createElement('div');
-    taskItem.className = 'task-item';
+    taskItem.className = 'task-card';
     taskItem.dataset.taskId = task.id;
     
     let statusClass = 'status-stopped';
@@ -101,24 +101,60 @@ function renderTaskList(tasks) {
     
     taskItem.innerHTML = `
       <div class="task-header">
-        <div class="task-name">${task.name}</div>
+        <div class="task-info">
+          <div class="task-name">${task.name}</div>
+          <div class="task-meta">
+            <span>ID: ${task.id.substring(0, 8)}</span>
+            <span>URL: ${task.url}</span>
+          </div>
+        </div>
         <div class="task-status ${statusClass}">${task.status}</div>
       </div>
-      <div class="task-info">
-        <p>本地地址: ${task.url}</p>
+      <div class="task-details">
         ${task.config.mode === 'portmap' ? `
-          <p>模式: 端口映射</p>
-          ${task.config.targetAddr ? `<p>映射目标: ${task.config.targetAddr}:${task.config.targetPort}</p>` : ''}
+          <div class="task-detail-item">
+            <span class="task-detail-label">模式:</span>
+            <span>端口映射</span>
+          </div>
+          ${task.config.targetAddr ? `
+            <div class="task-detail-item">
+              <span class="task-detail-label">映射目标:</span>
+              <span>${task.config.targetAddr}:${task.config.targetPort}</span>
+            </div>
+          ` : ''}
         ` : `
-          <p>模式: 代理</p>
-          ${task.config.remoteProto ? `<p>远程地址: ${task.config.remoteProto}:${task.config.remoteAddr}:${task.config.remotePort}</p>` : '<p>模式: 直接代理</p>'}
+          <div class="task-detail-item">
+            <span class="task-detail-label">模式:</span>
+            <span>代理</span>
+          </div>
+          ${task.config.remoteProto ? `
+            <div class="task-detail-item">
+              <span class="task-detail-label">远程地址:</span>
+              <span>${task.config.remoteProto}:${task.config.remoteAddr}:${task.config.remotePort}</span>
+            </div>
+          ` : `
+            <div class="task-detail-item">
+              <span class="task-detail-label">模式:</span>
+              <span>直接代理</span>
+            </div>
+          `}
         `}
-        ${task.config.interface ? `<p>网络接口: ${task.config.interface}</p>` : ''}
-        ${task.config.debug ? '<p>调试模式: 已启用</p>' : ''}
+        ${task.config.interface ? `
+          <div class="task-detail-item">
+            <span class="task-detail-label">网络接口:</span>
+            <span>${task.config.interface}</span>
+          </div>
+        ` : ''}
+        ${task.config.debug ? `
+          <div class="task-detail-item">
+            <span class="task-detail-label">调试模式:</span>
+            <span>已启用</span>
+          </div>
+        ` : ''}
       </div>
       <div class="task-actions">
-        ${task.status !== '运行中' ? `<button class="btn-primary" onclick="startTask('${task.id}')">启动</button>` : `<button class="btn-danger" onclick="stopTask('${task.id}')">停止</button>`}
-        <button class="btn-info" onclick="removeTask('${task.id}')">删除</button>
+        ${task.status !== '运行中' ? `<button class="btn btn-primary" onclick="startTask('${task.id}')">启动</button>` : `<button class="btn btn-danger" onclick="stopTask('${task.id}')">停止</button>`}
+        <button class="btn btn-info" onclick="removeTask('${task.id}')">删除</button>
       </div>
       <div class="task-log-section">
         <div class="task-log-header">
@@ -148,7 +184,7 @@ function removeTask(taskId) {
 }
 
 function updateTaskStatus(data) {
-  const taskElement = document.querySelector(`.task-item[data-task-id="${data.taskId}"]`);
+  const taskElement = document.querySelector(`.task-card[data-task-id="${data.taskId}"]`);
   if (taskElement) {
     const statusElement = taskElement.querySelector('.task-status');
     statusElement.textContent = data.status;
@@ -166,13 +202,13 @@ function updateTaskStatus(data) {
     const actionsElement = taskElement.querySelector('.task-actions');
     if (data.status === '运行中') {
       actionsElement.innerHTML = `
-        <button class="btn-danger" onclick="stopTask('${data.taskId}')">停止</button>
-        <button class="btn-info" onclick="removeTask('${data.taskId}')">删除</button>
+        <button class="btn btn-danger" onclick="stopTask('${data.taskId}')">停止</button>
+        <button class="btn btn-info" onclick="removeTask('${data.taskId}')">删除</button>
       `;
     } else {
       actionsElement.innerHTML = `
-        <button class="btn-primary" onclick="startTask('${data.taskId}')">启动</button>
-        <button class="btn-info" onclick="removeTask('${data.taskId}')">删除</button>
+        <button class="btn btn-primary" onclick="startTask('${data.taskId}')">启动</button>
+        <button class="btn btn-info" onclick="removeTask('${data.taskId}')">删除</button>
       `;
     }
   }

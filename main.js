@@ -1,9 +1,50 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const fs = require('fs');
 
 let mainWindow;
 let tasks = new Map();
+const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');
+
+function saveTasks() {
+  try {
+    const tasksToSave = [];
+    tasks.forEach((task, id) => {
+      tasksToSave.push({
+        id,
+        name: task.name,
+        config: task.config,
+        status: task.status
+      });
+    });
+    fs.writeFileSync(tasksFilePath, JSON.stringify(tasksToSave, null, 2));
+    console.log('Tasks saved successfully');
+  } catch (error) {
+    console.error('Error saving tasks:', error);
+  }
+}
+
+function loadTasks() {
+  try {
+    if (fs.existsSync(tasksFilePath)) {
+      const savedTasks = JSON.parse(fs.readFileSync(tasksFilePath, 'utf8'));
+      savedTasks.forEach(taskData => {
+        tasks.set(taskData.id, {
+          id: taskData.id,
+          name: taskData.name,
+          config: taskData.config,
+          status: '已停止', // 启动时所有任务都设置为已停止状态
+          process: null,
+          url: ''
+        });
+      });
+      console.log('Tasks loaded successfully:', savedTasks.length);
+    }
+  } catch (error) {
+    console.error('Error loading tasks:', error);
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -123,6 +164,7 @@ ipcMain.on('create-task', (event, config) => {
     };
     
     tasks.set(taskId, task);
+    saveTasks();
     
     // 恢复 stdout 和 stderr 事件监听器，显示 Gost 进程的运行结果
     // 这些日志会显示在任务的独立日志区域中
@@ -188,6 +230,7 @@ ipcMain.on('remove-task', (event, taskId) => {
       task.process.kill();
     }
     tasks.delete(taskId);
+    saveTasks();
     sendTaskList();
     sendLog(taskId, '任务已移除');
   }
@@ -411,6 +454,7 @@ ipcMain.on('stop-all-tasks', (event, taskId) => {
 });
 
 app.whenReady().then(() => {
+  loadTasks();
   createWindow();
 
   app.on('activate', function() {
@@ -419,6 +463,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', function() {
+  saveTasks();
   tasks.forEach((task, id) => {
     if (task.process) {
       task.process.kill();
