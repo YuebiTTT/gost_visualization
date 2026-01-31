@@ -56,6 +56,9 @@ function getConfig() {
     remoteProto: document.getElementById('remote-proto').value,
     remoteAddr: document.getElementById('remote-addr').value,
     remotePort: document.getElementById('remote-port').value,
+    mode: document.getElementById('mode').value,
+    targetAddr: document.getElementById('target-addr').value,
+    targetPort: document.getElementById('target-port').value,
     interface: document.getElementById('interface').value,
     debug: document.getElementById('debug').checked
   };
@@ -103,7 +106,13 @@ function renderTaskList(tasks) {
       </div>
       <div class="task-info">
         <p>本地地址: ${task.url}</p>
-        ${task.config.remoteProto ? `<p>远程地址: ${task.config.remoteProto}:${task.config.remoteAddr}:${task.config.remotePort}</p>` : '<p>模式: 直接代理</p>'}
+        ${task.config.mode === 'portmap' ? `
+          <p>模式: 端口映射</p>
+          ${task.config.targetAddr ? `<p>映射目标: ${task.config.targetAddr}:${task.config.targetPort}</p>` : ''}
+        ` : `
+          <p>模式: 代理</p>
+          ${task.config.remoteProto ? `<p>远程地址: ${task.config.remoteProto}:${task.config.remoteAddr}:${task.config.remotePort}</p>` : '<p>模式: 直接代理</p>'}
+        `}
         ${task.config.interface ? `<p>网络接口: ${task.config.interface}</p>` : ''}
         ${task.config.debug ? '<p>调试模式: 已启用</p>' : ''}
       </div>

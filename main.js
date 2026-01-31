@@ -68,18 +68,35 @@ ipcMain.on('create-task', (event, config) => {
   const taskId = generateTaskId();
   const gostPath = path.join(__dirname, 'gost.exe');
   
-  let localAddr = config.localProto;
+  let args = [];
+  let url = '';
+  
+  if (config.mode === 'portmap') {
+    // 端口映射模式
+    if (config.targetAddr && config.targetPort) {
+      args = ['-L', `tcp://:${config.localPort}/${config.targetAddr}:${config.targetPort}`];
+      url = `tcp://localhost:${config.localPort}`;
+    } else {
+      sendLog(taskId, '错误: 端口映射模式需要设置映射目标地址和端口');
+      sendTaskStatus(taskId, '启动失败');
+      return;
+    }
+  } else {
+    // 代理模式
+    let localAddr = config.localProto;
     if (localAddr === 'http' || localAddr === 'https') {
       localAddr += '://';
     }
-    const args = ['-L', `${localAddr}:${config.localPort}`];
-  
-  if (config.remoteProto && config.remoteAddr && config.remotePort) {
-    let remoteAddr = config.remoteProto;
-    if (remoteAddr === 'http' || remoteAddr === 'https') {
-      remoteAddr += '://';
+    args = ['-L', `${localAddr}:${config.localPort}`];
+    url = `${config.localProto}://localhost:${config.localPort}`;
+    
+    if (config.remoteProto && config.remoteAddr && config.remotePort) {
+      let remoteAddr = config.remoteProto;
+      if (remoteAddr === 'http' || remoteAddr === 'https') {
+        remoteAddr += '://';
+      }
+      args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
     }
-    args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
   }
   
   if (config.debug) {
@@ -102,7 +119,7 @@ ipcMain.on('create-task', (event, config) => {
       process,
       status: '运行中',
       config,
-      url: `${config.localProto}://localhost:${config.localPort}`
+      url: url
     };
     
     tasks.set(taskId, task);
@@ -120,7 +137,8 @@ ipcMain.on('create-task', (event, config) => {
       if (
         message.includes('route.go:700:') && message.includes('on [::]:') ||
         message.includes('[http]') && (message.includes('->') || message.includes('<->')) ||
-        message.includes('[route]') && message.includes('->')
+        message.includes('[route]') && message.includes('->') ||
+        message.includes('[tcp]') && (message.includes('->') || message.includes('<->'))
       ) {
         sendLog(taskId, message);
       } else {
@@ -181,18 +199,35 @@ ipcMain.on('start-task', (event, taskId) => {
     const config = task.config;
     const gostPath = path.join(__dirname, 'gost.exe');
     
-    let localAddr = config.localProto;
-    if (localAddr === 'http' || localAddr === 'https') {
-      localAddr += '://';
-    }
-    const args = ['-L', `${localAddr}:${config.localPort}`];
+    let args = [];
+    let url = '';
     
-    if (config.remoteProto && config.remoteAddr && config.remotePort) {
-      let remoteAddr = config.remoteProto;
-      if (remoteAddr === 'http' || remoteAddr === 'https') {
-        remoteAddr += '://';
+    if (config.mode === 'portmap') {
+      // 端口映射模式
+      if (config.targetAddr && config.targetPort) {
+        args = ['-L', `tcp://:${config.localPort}/${config.targetAddr}:${config.targetPort}`];
+        url = `tcp://localhost:${config.localPort}`;
+      } else {
+        sendLog(taskId, '错误: 端口映射模式需要设置映射目标地址和端口');
+        sendTaskStatus(taskId, '启动失败');
+        return;
       }
-      args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
+    } else {
+      // 代理模式
+      let localAddr = config.localProto;
+      if (localAddr === 'http' || localAddr === 'https') {
+        localAddr += '://';
+      }
+      args = ['-L', `${localAddr}:${config.localPort}`];
+      url = `${config.localProto}://localhost:${config.localPort}`;
+      
+      if (config.remoteProto && config.remoteAddr && config.remotePort) {
+        let remoteAddr = config.remoteProto;
+        if (remoteAddr === 'http' || remoteAddr === 'https') {
+          remoteAddr += '://';
+        }
+        args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
+      }
     }
     
     if (config.debug) {
@@ -211,6 +246,7 @@ ipcMain.on('start-task', (event, taskId) => {
       
       task.process = process;
       task.status = '运行中';
+      task.url = url;
       
       process.stdout.on('data', (data) => {
         sendLog(taskId, data.toString().trim());
@@ -221,7 +257,8 @@ ipcMain.on('start-task', (event, taskId) => {
         if (
           message.includes('route.go:700:') && message.includes('on [::]:') ||
           message.includes('[http]') && (message.includes('->') || message.includes('<->')) ||
-          message.includes('[route]') && message.includes('->')
+          message.includes('[route]') && message.includes('->') ||
+          message.includes('[tcp]') && (message.includes('->') || message.includes('<->'))
         ) {
           sendLog(taskId, message);
         } else {
@@ -265,18 +302,35 @@ ipcMain.on('start-all-tasks', (event) => {
       const config = task.config;
       const gostPath = path.join(__dirname, 'gost.exe');
       
-      let localAddr = config.localProto;
-    if (localAddr === 'http' || localAddr === 'https') {
-      localAddr += '://';
-    }
-    const args = ['-L', `${localAddr}:${config.localPort}`];
+      let args = [];
+      let url = '';
       
-      if (config.remoteProto && config.remoteAddr && config.remotePort) {
-        let remoteAddr = config.remoteProto;
-        if (remoteAddr === 'http' || remoteAddr === 'https') {
-          remoteAddr += '://';
+      if (config.mode === 'portmap') {
+        // 端口映射模式
+        if (config.targetAddr && config.targetPort) {
+          args = ['-L', `tcp://:${config.localPort}/${config.targetAddr}:${config.targetPort}`];
+          url = `tcp://localhost:${config.localPort}`;
+        } else {
+          sendLog(id, '错误: 端口映射模式需要设置映射目标地址和端口');
+          sendTaskStatus(id, '启动失败');
+          return;
         }
-        args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
+      } else {
+        // 代理模式
+        let localAddr = config.localProto;
+        if (localAddr === 'http' || localAddr === 'https') {
+          localAddr += '://';
+        }
+        args = ['-L', `${localAddr}:${config.localPort}`];
+        url = `${config.localProto}://localhost:${config.localPort}`;
+        
+        if (config.remoteProto && config.remoteAddr && config.remotePort) {
+          let remoteAddr = config.remoteProto;
+          if (remoteAddr === 'http' || remoteAddr === 'https') {
+            remoteAddr += '://';
+          }
+          args.push('-F', `${remoteAddr}${config.remoteAddr}:${config.remotePort}`);
+        }
       }
       
       if (config.debug) {
@@ -291,6 +345,7 @@ ipcMain.on('start-all-tasks', (event) => {
         const process = spawn(gostPath, args);
         task.process = process;
         task.status = '运行中';
+        task.url = url;
         
         sendLog(id, `重启任务: ${id}`);
         sendLog(id, `启动命令: ${gostPath} ${args.join(' ')}`);
@@ -308,7 +363,8 @@ ipcMain.on('start-all-tasks', (event) => {
           if (
             message.includes('route.go:700:') && message.includes('on [::]:') ||
             message.includes('[http]') && (message.includes('->') || message.includes('<->')) ||
-            message.includes('[route]') && message.includes('->')
+            message.includes('[route]') && message.includes('->') ||
+            message.includes('[tcp]') && (message.includes('->') || message.includes('<->'))
           ) {
             sendLog(id, message);
           } else {
