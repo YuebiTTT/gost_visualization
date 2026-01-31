@@ -187,6 +187,37 @@
         gap: var(--spacing-lg);
       }
 
+      .header-menu {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-right: var(--spacing-lg);
+      }
+
+      .header-menu-item {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: var(--transition);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+      }
+
+      .header-menu-item:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .header-menu-item.active {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+      }
+
       .header-btn {
         background: rgba(255, 255, 255, 0.1);
         color: white;
@@ -209,71 +240,12 @@
       /* 主内容区域 */
       .main-content {
         flex: 1;
-        display: flex;
         padding: var(--spacing-xl);
-        gap: var(--spacing-xl);
-      }
-
-      /* 侧边栏 */
-      .sidebar {
-        width: var(--sidebar-width);
-        background: white;
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-xl);
-        box-shadow: var(--shadow-md);
-        transition: var(--transition);
-        height: fit-content;
-        position: sticky;
-        top: calc(var(--header-height) + var(--spacing-xl));
-      }
-
-      body.dark-theme .sidebar {
-        background: var(--light-color);
-      }
-
-      .sidebar-title {
-        font-size: var(--font-size-lg);
-        font-weight: var(--font-weight-semibold);
-        color: var(--primary-color);
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-md);
-        border-bottom: 1px solid var(--border-color);
-      }
-
-      .sidebar-menu {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-xs);
-      }
-
-      .sidebar-item {
-        padding: var(--spacing-md);
-        border-radius: var(--border-radius-sm);
-        cursor: pointer;
-        transition: var(--transition);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-medium);
-        color: var(--gray-color);
-      }
-
-      .sidebar-item:hover {
-        background: var(--light-color);
-        color: var(--primary-color);
-        transform: translateX(4px);
-      }
-
-      .sidebar-item.active {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-        color: white;
       }
 
       /* 内容区域 */
       .content {
-        flex: 1;
-        min-width: 0;
+        width: 100%;
       }
 
       /* 卡片样式 */
@@ -829,36 +801,44 @@
       /* 响应式设计 */
       @media (max-width: 1200px) {
         .main-content {
-          flex-direction: column;
           padding: var(--spacing-lg);
-          gap: var(--spacing-lg);
         }
 
-        .sidebar {
-          width: 100%;
-          position: static;
-          order: 1;
+        .header-menu {
+          gap: var(--spacing-xs);
         }
 
-        .content {
-          order: 2;
-        }
-
-        .sidebar-menu {
-          flex-direction: row;
-          flex-wrap: wrap;
-        }
-
-        .sidebar-item {
-          flex: 1;
-          min-width: 120px;
-          justify-content: center;
+        .header-menu-item {
+          padding: var(--spacing-xs) var(--spacing-md);
+          font-size: var(--font-size-xs);
         }
       }
 
       @media (max-width: 768px) {
+        .header {
+          padding: 0 var(--spacing-lg);
+        }
+
+        .header-brand {
+          gap: var(--spacing-sm);
+        }
+
+        .header-logo {
+          font-size: var(--font-size-lg);
+        }
+
         .header-nav {
-          gap: var(--spacing-md);
+          gap: var(--spacing-sm);
+        }
+
+        .header-menu {
+          gap: var(--spacing-xs);
+          margin-right: var(--spacing-md);
+        }
+
+        .header-menu-item {
+          padding: var(--spacing-xs) var(--spacing-sm);
+          font-size: var(--font-size-xs);
         }
 
         .header-btn {
@@ -942,28 +922,23 @@
           <div class="header-logo">GOST PROXY</div>
         </div>
         <div class="header-nav">
+          <nav class="header-menu">
+            <div class="header-menu-item active" data-section="config">
+              创建任务
+            </div>
+            <div class="header-menu-item" data-section="tasks">
+              任务管理
+            </div>
+            <div class="header-menu-item" data-section="logs">
+              运行日志
+            </div>
+          </nav>
           <button class="header-btn" id="theme-toggle">切换主题</button>
         </div>
       </header>
 
       <!-- 主内容区域 -->
       <main class="main-content">
-        <!-- 侧边栏 -->
-        <aside class="sidebar">
-          <div class="sidebar-title">导航菜单</div>
-          <nav class="sidebar-menu">
-            <div class="sidebar-item active" data-section="config">
-              创建任务
-            </div>
-            <div class="sidebar-item" data-section="tasks">
-              任务管理
-            </div>
-            <div class="sidebar-item" data-section="logs">
-              运行日志
-            </div>
-          </nav>
-        </aside>
-
         <!-- 内容区域 -->
         <div class="content">
           <!-- 配置部分 -->
@@ -1035,21 +1010,14 @@
             </div>
           </section>
 
-          <!-- 操作按钮部分 -->
-          <section class="card">
-            <div class="card-header">
-              <h2 class="card-title">批量操作</h2>
-            </div>
-            <div class="btn-group">
-              <button id="start-all-btn" class="btn btn-secondary">启动所有任务</button>
-              <button id="stop-all-btn" class="btn btn-danger">停止所有任务</button>
-            </div>
-          </section>
-
           <!-- 任务管理部分 -->
           <section id="tasks-section" class="card">
             <div class="card-header">
               <h2 class="card-title">任务管理</h2>
+            </div>
+            <div class="btn-group" style="margin-bottom: var(--spacing-xl);">
+              <button id="start-all-btn" class="btn btn-secondary">启动所有任务</button>
+              <button id="stop-all-btn" class="btn btn-danger">停止所有任务</button>
             </div>
             <div id="task-list" class="task-list">
               <div class="empty-state" id="empty-state">

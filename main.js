@@ -1,9 +1,10 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const fs = require('fs');
 
 let mainWindow;
+let tray = null;
 let tasks = new Map();
 const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');
 
@@ -47,9 +48,19 @@ function loadTasks() {
 }
 
 function createWindow() {
+  // 设置窗口图标
+  const { nativeImage } = require('electron');
+  let windowIcon;
+  try {
+    windowIcon = nativeImage.createFromPath(path.join(__dirname, 'public', 'app-icon.png'));
+  } catch (error) {
+    windowIcon = nativeImage.createEmpty();
+  }
+
   mainWindow = new BrowserWindow({
     width: 1000,
     height: 800,
+    icon: windowIcon,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js')
     }
@@ -57,14 +68,91 @@ function createWindow() {
 
   mainWindow.loadURL('http://localhost:5173/');
 
-  mainWindow.on('closed', function() {
-    tasks.forEach((task, id) => {
-      if (task.process) {
-        task.process.kill();
-      }
-    });
-    if (process.platform !== 'darwin') app.quit();
+  // 关闭窗口时最小化至任务栏
+  mainWindow.on('close', function(event) {
+    event.preventDefault();
+    mainWindow.hide();
   });
+
+  // 创建系统托盘图标
+  createTray();
+}
+
+function createTray() {
+  try {
+    // 使用网络图标
+    const { nativeImage } = require('electron');
+    const iconUrl = 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=A%20modern%20flat%20design%20icon%20for%20a%20network%20proxy%20tool%2C%20featuring%20a%20globe%20with%20network%20connections%2C%20blue%20and%20green%20colors%2C%20clean%20lines%2C%20suitable%20for%20a%20Windows%20application%20tray%20icon&image_size=square_hd';
+    
+    // 使用本地文件作为备用图标
+    const iconPath = path.join(__dirname, 'public', 'app-icon.png');
+    
+    let trayIcon;
+    try {
+      // 尝试使用本地图标
+      trayIcon = nativeImage.createFromPath(iconPath);
+    } catch (error) {
+      // 如果本地图标加载失败，使用空图标
+      trayIcon = nativeImage.createEmpty();
+    }
+    
+    tray = new Tray(trayIcon);
+    
+    // 创建右键菜单
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '打开窗口',
+        click: function() {
+          mainWindow.show();
+        }
+      },
+      {
+        label: '停止服务',
+        click: function() {
+          tasks.forEach((task, id) => {
+            if (task.process) {
+              task.process.kill();
+              task.status = '已停止';
+              sendTaskStatus(id, '已停止');
+            }
+          });
+          sendTaskList();
+        }
+      },
+      {
+        label: '退出',
+        click: function() {
+          // 停止所有任务
+          tasks.forEach((task, id) => {
+            if (task.process) {
+              task.process.kill();
+            }
+          });
+          
+          // 销毁托盘图标
+          if (tray) {
+            tray.destroy();
+          }
+          
+          // 强制退出应用程序
+          app.exit();
+        }
+      }
+    ]);
+    
+    // 设置托盘图标提示
+    tray.setToolTip('Gost Visualization');
+    
+    // 设置右键菜单
+    tray.setContextMenu(contextMenu);
+    
+    // 左键点击托盘图标显示窗口
+    tray.on('click', function() {
+      mainWindow.show();
+    });
+  } catch (error) {
+    console.error('创建托盘图标失败:', error);
+  }
 }
 
 function sendLog(taskId, message) {
@@ -464,10 +552,6 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', function() {
   saveTasks();
-  tasks.forEach((task, id) => {
-    if (task.process) {
-      task.process.kill();
-    }
-  });
-  if (process.platform !== 'darwin') app.quit();
+  // 不退出应用程序，让它在任务栏中继续运行
+  // if (process.platform !== 'darwin') app.quit();
 });

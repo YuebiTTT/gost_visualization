@@ -258,6 +258,47 @@ initTheme();
 // 绑定主题切换按钮
 document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
+// 导航菜单切换功能
+function initNavigation() {
+  const menuItems = document.querySelectorAll('.header-menu-item');
+  const sections = {
+    config: document.getElementById('config-section'),
+    tasks: document.getElementById('tasks-section'),
+    logs: document.getElementById('logs-section')
+  };
+
+  // 初始化时默认只显示创建任务部分
+  Object.keys(sections).forEach(key => {
+    if (key === 'config') {
+      sections[key].style.display = 'block';
+    } else {
+      sections[key].style.display = 'none';
+    }
+  });
+
+  menuItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const section = item.dataset.section;
+      
+      // 更新菜单激活状态
+      menuItems.forEach(mi => mi.classList.remove('active'));
+      item.classList.add('active');
+      
+      // 显示对应部分，隐藏其他部分
+      Object.keys(sections).forEach(key => {
+        if (key === section) {
+          sections[key].style.display = 'block';
+        } else {
+          sections[key].style.display = 'none';
+        }
+      });
+    });
+  });
+}
+
+// 初始化导航
+initNavigation();
+
 // 初始化时获取任务列表
 electronAPI.getTaskList();
 
