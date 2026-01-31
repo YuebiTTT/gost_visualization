@@ -4,17 +4,21 @@
   "version": "0.0.0",
   "type": "commonjs",
   "main": "main.js",
+  "description": "GOST可视化工具",
+  "author": "User",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "electron:dev": "concurrently \"npm run dev\" \"electron .\"",
-    "electron:build": "vite build && electron-builder"
+    "electron:build": "vite build && electron-builder --dir --win",
+    "electron:package": "vite build && electron-packager . --platform=win32 --arch=x64 --out=dist --overwrite"
   },
   "devDependencies": {
-    "vite": "npm:rolldown-vite@7.2.5",
+    "concurrently": "^8.2.2",
     "electron": "^29.0.0",
     "electron-builder": "^24.13.3",
-    "concurrently": "^8.2.2"
+    "electron-packager": "^17.1.2",
+    "vite": "npm:rolldown-vite@7.2.5"
   }
 }

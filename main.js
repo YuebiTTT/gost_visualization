@@ -6,7 +6,12 @@ const fs = require('fs');
 let mainWindow;
 let tray = null;
 let tasks = new Map();
+let settings = {
+  minimizeToTray: true,
+  autoStart: false
+};
 const tasksFilePath = path.join(app.getPath('userData'), 'tasks.json');
+const settingsFilePath = path.join(app.getPath('userData'), 'settings.json');
 
 function saveTasks() {
   try {
@@ -23,6 +28,27 @@ function saveTasks() {
     console.log('Tasks saved successfully');
   } catch (error) {
     console.error('Error saving tasks:', error);
+  }
+}
+
+function saveSettings() {
+  try {
+    fs.writeFileSync(settingsFilePath, JSON.stringify(settings, null, 2));
+    console.log('Settings saved successfully');
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+}
+
+function loadSettings() {
+  try {
+    if (fs.existsSync(settingsFilePath)) {
+      const savedSettings = JSON.parse(fs.readFileSync(settingsFilePath, 'utf8'));
+      settings = { ...settings, ...savedSettings };
+      console.log('Settings loaded successfully:', settings);
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
   }
 }
 
@@ -68,10 +94,12 @@ function createWindow() {
 
   mainWindow.loadURL('http://localhost:5173/');
 
-  // 关闭窗口时最小化至任务栏
+  // 关闭窗口时根据设置决定是否最小化至任务栏
   mainWindow.on('close', function(event) {
-    event.preventDefault();
-    mainWindow.hide();
+    if (settings.minimizeToTray) {
+      event.preventDefault();
+      mainWindow.hide();
+    }
   });
 
   // 创建系统托盘图标
@@ -541,8 +569,45 @@ ipcMain.on('stop-all-tasks', (event, taskId) => {
   sendLog('系统', '所有任务已停止');
 });
 
+ipcMain.on('get-settings', (event) => {
+  event.returnValue = settings;
+});
+
+ipcMain.on('update-settings', (event, newSettings) => {
+  settings = { ...settings, ...newSettings };
+  saveSettings();
+  
+  // 更新开机自启设置
+  if (settings.autoStart) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: process.execPath
+    });
+  } else {
+    app.setLoginItemSettings({
+      openAtLogin: false
+    });
+  }
+  
+  sendLog('系统', '设置已更新');
+});
+
 app.whenReady().then(() => {
+  loadSettings();
   loadTasks();
+  
+  // 设置开机自启
+  if (settings.autoStart) {
+    app.setLoginItemSettings({
+      openAtLogin: true,
+      path: process.execPath
+    });
+  } else {
+    app.setLoginItemSettings({
+      openAtLogin: false
+    });
+  }
+  
   createWindow();
 
   app.on('activate', function() {
@@ -552,6 +617,9 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', function() {
   saveTasks();
-  // 不退出应用程序，让它在任务栏中继续运行
-  // if (process.platform !== 'darwin') app.quit();
+  // 根据设置决定是否退出应用程序
+  if (!settings.minimizeToTray) {
+    app.quit();
+  }
+  // 如果设置为最小化到任务栏，则保持应用程序运行
 });

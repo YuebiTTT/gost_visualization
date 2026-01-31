@@ -264,7 +264,8 @@ function initNavigation() {
   const sections = {
     config: document.getElementById('config-section'),
     tasks: document.getElementById('tasks-section'),
-    logs: document.getElementById('logs-section')
+    logs: document.getElementById('logs-section'),
+    settings: document.getElementById('settings-section')
   };
 
   // 初始化时默认只显示创建任务部分
@@ -292,12 +293,39 @@ function initNavigation() {
           sections[key].style.display = 'none';
         }
       });
+      
+      // 如果切换到设置页面，加载设置
+      if (section === 'settings') {
+        loadSettings();
+      }
     });
   });
 }
 
+// 加载设置
+function loadSettings() {
+  const settings = electronAPI.getSettings();
+  document.getElementById('minimize-to-tray').checked = settings.minimizeToTray;
+  document.getElementById('auto-start').checked = settings.autoStart;
+}
+
+// 保存设置
+function saveSettings() {
+  const settings = {
+    minimizeToTray: document.getElementById('minimize-to-tray').checked,
+    autoStart: document.getElementById('auto-start').checked
+  };
+  electronAPI.updateSettings(settings);
+  log({ message: '设置已保存' });
+}
+
 // 初始化导航
 initNavigation();
+
+// 绑定保存设置按钮
+if (document.getElementById('save-settings-btn')) {
+  document.getElementById('save-settings-btn').addEventListener('click', saveSettings);
+}
 
 // 初始化时获取任务列表
 electronAPI.getTaskList();

@@ -932,6 +932,9 @@
             <div class="header-menu-item" data-section="logs">
               运行日志
             </div>
+            <div class="header-menu-item" data-section="settings">
+              系统设置
+            </div>
           </nav>
           <button class="header-btn" id="theme-toggle">切换主题</button>
         </div>
@@ -1032,6 +1035,26 @@
               <h2 class="card-title">运行日志</h2>
             </div>
             <div class="log-content" id="log"></div>
+          </section>
+
+          <!-- 设置部分 -->
+          <section id="settings-section" class="card">
+            <div class="card-header">
+              <h2 class="card-title">系统设置</h2>
+            </div>
+            <div class="form-grid">
+              <div class="form-checkbox">
+                <input type="checkbox" id="minimize-to-tray" />
+                <label class="form-label">关闭窗口时最小化至任务栏</label>
+              </div>
+              <div class="form-checkbox">
+                <input type="checkbox" id="auto-start" />
+                <label class="form-label">开机自启</label>
+              </div>
+            </div>
+            <div class="btn-group" style="margin-top: var(--spacing-xl);">
+              <button id="save-settings-btn" class="btn btn-primary">保存设置</button>
+            </div>
           </section>
         </div>
       </main>

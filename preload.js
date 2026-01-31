@@ -8,6 +8,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getTaskList: () => ipcRenderer.send('get-task-list'),
   startAllTasks: () => ipcRenderer.send('start-all-tasks'),
   stopAllTasks: () => ipcRenderer.send('stop-all-tasks'),
+  getSettings: () => ipcRenderer.sendSync('get-settings'),
+  updateSettings: (settings) => ipcRenderer.send('update-settings', settings),
   onLog: (callback) => ipcRenderer.on('log', (event, data) => callback(data)),
   onTaskStatus: (callback) => ipcRenderer.on('task-status', (event, data) => callback(data)),
   onTaskInfo: (callback) => ipcRenderer.on('task-info', (event, data) => callback(data)),
